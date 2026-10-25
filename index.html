@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>海克斯棋（Hex）人机对战</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <h1>海克斯棋（Hex）</h1>
+      <p class="subtitle">红方连通上下边界 · 蓝方连通左右边界 · 红方先行 · 无平局</p>
+    </header>
+
+    <main class="layout">
+      <div id="board-wrap" class="board-wrap">
+        <canvas id="board"></canvas>
+      </div>
+
+      <aside class="panel">
+        <section class="controls">
+          <h2>对局设置</h2>
+
+          <label>
+            棋盘大小
+            <select id="size">
+              <option value="5">5 × 5</option>
+              <option value="7">7 × 7</option>
+              <option value="9">9 × 9</option>
+              <option value="11" selected>11 × 11</option>
+              <option value="13">13 × 13</option>
+            </select>
+          </label>
+
+          <label>
+            对局模式
+            <select id="mode">
+              <option value="human-red">人机对战（我方执红）</option>
+              <option value="human-blue">人机对战（我方执蓝）</option>
+              <option value="pvp">双人对战</option>
+              <option value="ai-ai">AI 对战（观战）</option>
+            </select>
+          </label>
+
+          <label>
+            AI 难度
+            <select id="difficulty">
+              <option value="easy">简单</option>
+              <option value="medium" selected>中等</option>
+              <option value="hard">困难</option>
+            </select>
+          </label>
+
+          <div class="buttons">
+            <button id="newGame" class="primary">新游戏</button>
+            <button id="undo">悔棋</button>
+            <button id="hint">提示</button>
+            <button id="aiMove">AI 落子</button>
+            <button id="pause">暂停 / 继续</button>
+          </div>
+        </section>
+
+        <section class="status">
+          <div id="turnIndicator" class="turn">…</div>
+          <div id="message" class="message"></div>
+          <div class="legend">
+            <div><span class="swatch red"></span> 红方：连接上下边界（先行）</div>
+            <div><span class="swatch blue"></span> 蓝方：连接左右边界</div>
+          </div>
+          <div id="info" class="info"></div>
+        </section>
+
+        <section class="about">
+          <h2>规则提示</h2>
+          <ul>
+            <li>双方轮流在空格落子。</li>
+            <li>同色相邻棋子互相连通。</li>
+            <li>先用同色棋子连通己方两条边界者获胜。</li>
+            <li>海克斯棋保证无平局。</li>
+            <li>「悔棋」在人机模式下回退一整轮。</li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script src="js/game.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
