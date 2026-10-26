@@ -19,9 +19,9 @@
 
   // 难度 -> 搜索深度 / 时间预算
   var DIFFICULTY = {
-    easy:   { maxDepth: 3, timeLimitMs: 600 },
-    medium: { maxDepth: 6, timeLimitMs: 2000 },
-    hard:   { maxDepth: 10, timeLimitMs: 5000 }
+    easy:   { maxDepth: 5, timeLimitMs: 400 },
+    medium: { maxDepth: 9, timeLimitMs: 2500 },
+    hard:   { maxDepth: 16, timeLimitMs: 10000 }
   };
 
   var COLORS = {
