@@ -111,6 +111,19 @@ console.log('\n[8] AI 封堵对手');
   assert(res && res.r === 2 && res.c === 4, 'AI 封堵蓝方获胜点 (2,4)（实际=' + (res && (res.r + ',' + res.c)) + '）');
 }
 
+console.log('\n[9] 双杀威胁检测（评估函数）');
+{
+  const N = 5;
+  // 红方 (0,2)(1,2)(2,2)(3,2)：距离=1，且 (4,1)、(4,2) 两个取胜点 => 双杀
+  const b = makeBoard(N, [[0, 2, G.RED], [1, 2, G.RED], [2, 2, G.RED], [3, 2, G.RED]]);
+  const info = G.computeDistanceInfo(b, N, G.RED);
+  assert(info && info.dist === 1 && info.width >= 2, '红方出现双杀点（dist=' + (info && info.dist) + ' width=' + (info && info.width) + '）');
+  assert(G.evaluate(b, N, G.BLUE) === -90000, '防守方评估识别双杀为近乎必败');
+
+  // 空盘不应误判
+  assert(G.evaluate(G.createBoard(N), N, G.RED) === 0, '空盘评估仍为均势 0');
+}
+
 console.log('\n==============================');
 console.log('通过 ' + passed + ' 项，失败 ' + failed + ' 项');
 process.exit(failed === 0 ? 0 : 1);

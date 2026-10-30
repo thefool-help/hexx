@@ -197,7 +197,7 @@
    *
    * @returns {number} 最少还需落子数；若被完全阻断则返回 INF。
    */
-  function computeDistance(board, N, color) {
+  function computeDistanceInfo(board, N, color) {
     var V = N * N;
     var dist = new Int32Array(V);
     for (var i = 0; i < V; i++) dist[i] = INF;
@@ -251,17 +251,28 @@
       }
     }
 
-    // 在目标边取最短距离
+    // 在目标边取最短距离，并统计达到最短距离的目标格数量（宽度）。
+    // 宽度 = 该方“一步即可连通”的取胜点数量；宽度 ≥2 即“双杀点”，对手无法同时封堵。
     var best = INF;
+    var width = 0;
     for (var r2 = 0; r2 < N; r2++) {
       for (var c2 = 0; c2 < N; c2++) {
-        if (isTarget(r2, c2)) {
-          var ti = idx(r2, c2, N);
-          if (dist[ti] < best) best = dist[ti];
+        if (!isTarget(r2, c2)) continue;
+        var ti = idx(r2, c2, N);
+        if (dist[ti] < best) {
+          best = dist[ti];
+          width = 1;
+        } else if (dist[ti] === best) {
+          width++;
         }
       }
     }
-    return best;
+    return { dist: best, width: width };
+  }
+
+  /** 兼容旧接口：只返回最短距离。 */
+  function computeDistance(board, N, color) {
+    return computeDistanceInfo(board, N, color).dist;
   }
 
   /**
@@ -277,11 +288,19 @@
    * @returns {number} 评估值（整数，量级约在 [-N^2, N^2] 之间）
    */
   function evaluate(board, N, color) {
-    var mine = computeDistance(board, N, color);
-    var opp = computeDistance(board, N, opponent(color));
+    var mineInfo = computeDistanceInfo(board, N, color);
+    var oppInfo = computeDistanceInfo(board, N, opponent(color));
+    var mine = mineInfo.dist;
+    var opp = oppInfo.dist;
 
     if (mine === 0) return 100000;  // 己方已连通（必胜）
     if (opp === 0) return -100000;  // 对方已连通（必败）
+
+    // 双杀检测：某方一步即可连通且存在 ≥2 个取胜点，对手无法同时封堵。
+    // 这条弥补了“距离差”评估看不出双杀威胁的盲点，避免地平线效应。
+    if (opp === 1 && oppInfo.width >= 2) return -90000;
+    if (mine === 1 && mineInfo.width >= 2) return 90000;
+
     return opp - mine;
   }
 
@@ -372,6 +391,7 @@
     isWinAfterMove: isWinAfterMove,
     isWin: isWin,
     computeDistance: computeDistance,
+    computeDistanceInfo: computeDistanceInfo,
     evaluate: evaluate,
     candidateMoves: candidateMoves
   };
