@@ -40,6 +40,20 @@
     [1, 0]   // 下
   ];
 
+  /**
+   * 六种“2-桥”（虚拟连接）的相对偏移及其两个公共空格偏移。
+   * 若某色两子相差 (dr,dc)，且 c1/c2 两个格子都为空，则这两子虚拟相连：
+   * 对方封住一个空格，己方占另一个，连接无法被切断。
+   */
+  var BRIDGE_PATTERNS = [
+    { dr: -2, dc: 1, c1: [-1, 0], c2: [-1, 1] },
+    { dr: -1, dc: -1, c1: [-1, 0], c2: [0, -1] },
+    { dr: -1, dc: 2, c1: [-1, 1], c2: [0, 1] },
+    { dr: 1, dc: -2, c1: [0, -1], c2: [1, -1] },
+    { dr: 1, dc: 1, c1: [0, 1], c2: [1, 0] },
+    { dr: 2, dc: -1, c1: [1, -1], c2: [1, 0] }
+  ];
+
   /* ============================ 基础工具 ============================ */
 
   /**
@@ -216,6 +230,32 @@
       return color === RED ? r === N - 1 : c === N - 1;
     }
 
+    // 预计算“桥”（虚拟连接）：bridgeList[i] = [桥伙伴格子下标, ...]（仅己方棋子有）。
+    // 若两枚己方棋子相隔 (dr,dc)，且两个公共空格都为空，则它们虚拟相连（对方无法切断）。
+    // 这样距离计算能“看穿”桥与长线，从而更准确地评估双方威胁。
+    var bridgeList = new Array(V);
+    for (var bi = 0; bi < V; bi++) {
+      if (board[bi] !== color) continue;
+      var br = Math.floor(bi / N);
+      var bc = bi % N;
+      for (var p = 0; p < BRIDGE_PATTERNS.length; p++) {
+        var pat = BRIDGE_PATTERNS[p];
+        var pr = br + pat.dr;
+        var pc = bc + pat.dc;
+        if (!inBounds(pr, pc, N)) continue;
+        var pi = idx(pr, pc, N);
+        if (board[pi] !== color) continue;
+        var xr = br + pat.c1[0];
+        var xc = bc + pat.c1[1];
+        var yr = br + pat.c2[0];
+        var yc = bc + pat.c2[1];
+        if (!inBounds(xr, xc, N) || !inBounds(yr, yc, N)) continue;
+        if (board[idx(xr, xc, N)] !== EMPTY || board[idx(yr, yc, N)] !== EMPTY) continue;
+        (bridgeList[bi] || (bridgeList[bi] = [])).push(pi);
+        (bridgeList[pi] || (bridgeList[pi] = [])).push(bi);
+      }
+    }
+
     // 初始化：把起始边上所有非“对方”格子加入队列。
     // 己方格子代价 0（队首），空格代价 1（队尾），对方格子不入队。
     for (var r = 0; r < N; r++) {
@@ -235,6 +275,18 @@
       var cur = dq[head++];
       var cr = Math.floor(cur / N);
       var cc = cur % N;
+
+      // 桥边：cur 是己方棋子且有桥伙伴时，以 0 代价松弛伙伴（虚拟相连）
+      var bl = bridgeList[cur];
+      if (bl) {
+        for (var bj = 0; bj < bl.length; bj++) {
+          var partner = bl[bj];
+          if (dist[cur] < dist[partner]) {
+            dist[partner] = dist[cur];
+            dq[--head] = partner; // 0 代价：插入队首
+          }
+        }
+      }
 
       var ns = neighbors(cr, cc, N);
       for (var k = 0; k < ns.length; k++) {
